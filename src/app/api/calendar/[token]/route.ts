@@ -10,14 +10,14 @@ export async function GET(
 
   const rsvp = await prisma.rSVP.findUnique({
     where: { manageToken: token },
-    include: { invitation: { include: { event: { include: { organization: true } } } } },
+    include: { event: { include: { organization: true } } },
   });
 
-  if (!rsvp || !rsvp.invitation?.event) {
+  if (!rsvp || !rsvp.event) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const event = rsvp.invitation.event;
+  const event = rsvp.event;
   const icsContent = generateICS(event);
 
   return new NextResponse(icsContent, {

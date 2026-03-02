@@ -26,9 +26,9 @@ export default async function DashboardPage() {
     }),
     prisma.invitee.count({ where: { organizationId: orgId } }),
     prisma.rSVP.findMany({
-      where: { invitation: { event: { organizationId: orgId } } },
+      where: { event: { organizationId: orgId } },
       orderBy: { createdAt: "desc" }, take: 10,
-      include: { invitation: { include: { invitee: true, event: { select: { name: true } } } } },
+      include: { invitee: true, event: { select: { name: true } } },
     }),
   ]);
 

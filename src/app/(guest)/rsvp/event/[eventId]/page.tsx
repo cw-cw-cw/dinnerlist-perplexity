@@ -20,7 +20,7 @@ export default async function GenericRSVPPage({ params }: { params: Promise<{ ev
   if (!event) notFound();
 
   const confirmedCount = await prisma.rSVP.count({
-    where: { invitation: { eventId: event.id }, status: "CONFIRMED" },
+    where: { eventId: event.id, status: "CONFIRMED" },
   });
 
   const isFull = event.privateCapacity ? confirmedCount >= event.privateCapacity : false;

@@ -15,7 +15,7 @@ export default async function RSVPPage({ params }: { params: Promise<{ token: st
 
   const invitation = await prisma.invitation.findUnique({
     where: { token },
-    include: { event: { include: { organization: true, series: true } }, invitee: true, rsvp: true },
+    include: { event: { include: { organization: true, series: true } }, invitee: true },
   });
 
   if (!invitation || !invitation.event) notFound();
@@ -30,8 +30,13 @@ export default async function RSVPPage({ params }: { params: Promise<{ token: st
   const event = invitation.event;
   const org = event.organization;
 
+  // Fetch RSVP separately since Invitation doesn't have a direct rsvp relation
+  const existingRsvp = await prisma.rSVP.findUnique({
+    where: { eventId_inviteeId: { eventId: event.id, inviteeId: invitation.inviteeId } },
+  });
+
   const confirmedCount = await prisma.rSVP.count({
-    where: { invitation: { eventId: event.id }, status: "CONFIRMED" },
+    where: { eventId: event.id, status: "CONFIRMED" },
   });
   const capacityDisplay = getGuestCapacityDisplay(confirmedCount, event.publicCapacity, event.privateCapacity);
 
@@ -69,20 +74,20 @@ export default async function RSVPPage({ params }: { params: Promise<{ token: st
       name: org.name, logoUrl: org.logoUrl, logoIconUrl: org.logoIconUrl,
       website: org.website, contactEmail: org.contactEmail, contactPhone: org.contactPhone,
     },
-    rsvp: invitation.rsvp ? {
-      id: invitation.rsvp.id, status: invitation.rsvp.status,
-      bringingGuest: invitation.rsvp.bringingGuest,
-      guestFirstName: invitation.rsvp.guestFirstName, guestLastName: invitation.rsvp.guestLastName,
-      phoneNumber: invitation.rsvp.phoneNumber, dietaryRestrictions: invitation.rsvp.dietaryRestrictions,
-      manageToken: invitation.rsvp.manageToken,
+    rsvp: existingRsvp ? {
+      id: existingRsvp.id, status: existingRsvp.status,
+      bringingGuest: existingRsvp.bringingGuest,
+      guestFirstName: existingRsvp.guestFirstName, guestLastName: existingRsvp.guestLastName,
+      phoneNumber: existingRsvp.phoneNumber, dietaryRestrictions: existingRsvp.dietaryRestrictions,
+      manageToken: existingRsvp.manageToken,
     } : null,
     capacity: capacityDisplay,
     alternateEvents,
-    existingRsvp: invitation.rsvp ? {
-      id: invitation.rsvp.id, status: invitation.rsvp.status,
-      bringingGuest: invitation.rsvp.bringingGuest,
-      guestFirstName: invitation.rsvp.guestFirstName, guestLastName: invitation.rsvp.guestLastName,
-      phoneNumber: invitation.rsvp.phoneNumber, dietaryRestrictions: invitation.rsvp.dietaryRestrictions,
+    existingRsvp: existingRsvp ? {
+      id: existingRsvp.id, status: existingRsvp.status,
+      bringingGuest: existingRsvp.bringingGuest,
+      guestFirstName: existingRsvp.guestFirstName, guestLastName: existingRsvp.guestLastName,
+      phoneNumber: existingRsvp.phoneNumber, dietaryRestrictions: existingRsvp.dietaryRestrictions,
     } : null,
     spotsRemaining: {
       display: capacityDisplay.spotsText,
@@ -91,7 +96,7 @@ export default async function RSVPPage({ params }: { params: Promise<{ token: st
     },
     percentFull: capacityDisplay.percentFull,
     urgencyLevel: capacityDisplay.urgencyLevel,
-    manageToken: invitation.rsvp?.manageToken ?? undefined,
+    manageToken: existingRsvp?.manageToken ?? undefined,
   };
 
   return <RSVPPageClient {...serializedData} />;

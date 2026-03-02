@@ -21,21 +21,17 @@ export async function GET(
   if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
   const rsvps = await prisma.rSVP.findMany({
-    where: { invitation: { eventId }, status: { in: ["CONFIRMED", "CHECKED_IN"] } },
+    where: { eventId, status: { in: ["CONFIRMED", "CHECKED_IN"] } },
     include: {
-      invitation: {
-        include: {
-          invitee: { select: { id: true, firstName: true, lastName: true, specialty: true, phone: true } },
-        },
-      },
+      invitee: { select: { id: true, firstName: true, lastName: true, specialty: true, phone: true } },
     },
-    orderBy: { invitation: { invitee: { lastName: "asc" } } },
+    orderBy: { invitee: { lastName: "asc" } },
   });
 
   const attendees = rsvps.map((rsvp) => ({
-    rsvpId: rsvp.id, inviteeId: rsvp.invitation.invitee.id,
-    firstName: rsvp.invitation.invitee.firstName, lastName: rsvp.invitation.invitee.lastName,
-    specialty: rsvp.invitation.invitee.specialty, phone: rsvp.invitation.invitee.phone,
+    rsvpId: rsvp.id, inviteeId: rsvp.invitee.id,
+    firstName: rsvp.invitee.firstName, lastName: rsvp.invitee.lastName,
+    specialty: rsvp.invitee.specialty, phone: rsvp.invitee.phone,
     status: rsvp.status, bringingGuest: rsvp.bringingGuest,
     guestFirstName: rsvp.guestFirstName, guestLastName: rsvp.guestLastName,
   }));
