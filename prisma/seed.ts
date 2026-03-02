@@ -1,4 +1,4 @@
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
@@ -7,7 +7,7 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("🌱 Seeding database...");
 
   // Create organization
   const org = await prisma.organization.upsert({
@@ -27,7 +27,7 @@ async function main() {
     },
   });
 
-  console.log(`Organization: ${org.name} (${org.id})`);
+  console.log(`✅ Organization: ${org.name} (${org.id})`);
 
   // Create admin user
   const hashedPassword = await bcrypt.hash("admin123", 12);
@@ -44,7 +44,7 @@ async function main() {
     },
   });
 
-  console.log(`Admin user: ${admin.email} (password: admin123)`);
+  console.log(`✅ Admin user: ${admin.email} (password: admin123)`);
 
   // Create a sample event series
   const series = await prisma.eventSeries.create({
@@ -57,7 +57,7 @@ async function main() {
     },
   });
 
-  console.log(`Event series: ${series.name}`);
+  console.log(`✅ Event series: ${series.name}`);
 
   // Create a sample event
   const eventDate = new Date("2025-03-15T23:00:00.000Z"); // 6 PM ET
@@ -80,7 +80,7 @@ async function main() {
       description:
         "Join a small group of physicians for a relaxed evening focused on the financial issues that hit physicians the hardest. No sales pitch. No slides. Just good food and practical conversation.",
       invitationHeadline: "An evening of dinner, conversation, and practical financial strategy",
-      hostName: "Colin Wiens, CFP MBA",
+      hostName: "Colin Wiens, CFP® MBA",
       hostBio:
         "I've spent the last 15 years working exclusively with Central Florida physicians on tax planning, investments, and building long-term wealth. I look forward to meeting you over dinner.",
       organizationId: org.id,
@@ -88,7 +88,7 @@ async function main() {
     },
   });
 
-  console.log(`Sample event: ${event.name} (${event.id})`);
+  console.log(`✅ Sample event: ${event.name} (${event.id})`);
 
   // Create a sample template
   const template = await prisma.eventTemplate.create({
@@ -102,14 +102,14 @@ async function main() {
       publicCapacity: 20,
       privateCapacity: 24,
       waitlistEnabled: true,
-      hostName: "Colin Wiens, CFP MBA",
+      hostName: "Colin Wiens, CFP® MBA",
       hostBio:
         "I've spent the last 15 years working exclusively with Central Florida physicians on tax planning, investments, and building long-term wealth. I look forward to meeting you over dinner.",
       organizationId: org.id,
     },
   });
 
-  console.log(`Template: ${template.name}`);
+  console.log(`✅ Template: ${template.name}`);
 
   // Create sample invitees
   const invitees = await Promise.all([
@@ -160,7 +160,7 @@ async function main() {
     }),
   ]);
 
-  console.log(`Created ${invitees.length} sample invitees`);
+  console.log(`✅ Created ${invitees.length} sample invitees`);
 
   // Create invitations for the event
   for (const invitee of invitees) {
@@ -171,11 +171,11 @@ async function main() {
       },
     });
     console.log(
-      `Invitation for ${invitee.firstName} ${invitee.lastName}: /rsvp/${invitation.token}`
+      `✅ Invitation for ${invitee.firstName} ${invitee.lastName}: /rsvp/${invitation.token}`
     );
   }
 
-  console.log("Seeding complete!");
+  console.log("\n🎉 Seeding complete!");
 }
 
 main()
