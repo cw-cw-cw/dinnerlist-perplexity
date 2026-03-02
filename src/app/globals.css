@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-brand-teal: #2E4E61;
+  --color-brand-teal-light: #3A6178;
+  --color-brand-teal-dark: #1E3544;
+  --color-brand-gold: #F3C317;
+  --color-brand-gold-soft: #F6E39E;
+  --color-brand-gold-border: #F3D05B;
+  --color-brand-dark: #111827;
+  --color-brand-white: #FFFFFF;
+  --color-brand-offwhite: #F9FAFB;
+  --color-text-primary: #111827;
+  --color-text-body: #2E4E61;
+  --color-text-muted: #6B7280;
+  --color-text-inverse: #FFFFFF;
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+  --color-waitlist: #7C3AED;
+  --color-info: #2563EB;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F9FAFB;
+  --color-border: #E5E7EB;
+  --color-border-muted: #F3F4F6;
+  --font-sans: "Fira Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --radius-card: 0.75rem;
+  --radius-button: 0.5rem;
+  --radius-pill: 1.25rem;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+*:focus-visible {
+  outline: 2px solid var(--color-brand-teal);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: var(--color-brand-gold-soft);
+  color: var(--color-text-primary);
+}
