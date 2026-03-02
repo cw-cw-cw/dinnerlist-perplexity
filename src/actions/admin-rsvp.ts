@@ -130,7 +130,7 @@ export async function adminCreateManualRsvp(
 
       const invitation = await tx.invitation.findUnique({
         where: { eventId_inviteeId: { eventId, inviteeId } },
-        include: { invitee: true, rsvp: true },
+        include: { invitee: true },
       });
       return { invitation };
     });
@@ -210,7 +210,7 @@ export async function adminCreateInviteeAndRsvp(opts: {
 
       const invitation = await tx.invitation.findUnique({
         where: { eventId_inviteeId: { eventId: opts.eventId, inviteeId: invitee.id } },
-        include: { invitee: true, rsvp: true },
+        include: { invitee: true },
       });
       return { invitation };
     });
