@@ -1,0 +1,470 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ORGANIZATION ────────────────────────────────────────────
+
+model Organization {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  // Branding
+  logoUrl     String? @map("logo_url")
+  logoIconUrl String? @map("logo_icon_url")
+  primaryColor String @default("#2E4E61") @map("primary_color")
+  accentColor  String @default("#F3C317") @map("accent_color")
+
+  // Contact
+  website      String?
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+
+  // Settings
+  timezone String @default("America/New_York")
+  settings Json   @default("{}")
+
+  // Salesforce (Phase 3)
+  salesforceInstanceUrl  String? @map("salesforce_instance_url")
+  salesforceAccessToken  String? @map("salesforce_access_token")
+  salesforceRefreshToken String? @map("salesforce_refresh_token")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  adminUsers     AdminUser[]
+  events         Event[]
+  eventSeries    EventSeries[]
+  eventTemplates EventTemplate[]
+  invitees       Invitee[]
+
+  @@map("organizations")
+}
+
+// ─── ADMIN USERS ─────────────────────────────────────────────
+
+model AdminUser {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  hashedPassword String    @map("hashed_password")
+  name           String
+  role           AdminRole @default(MANAGER)
+
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@map("admin_users")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+}
+
+// ─── EVENT SERIES ────────────────────────────────────────────
+
+model EventSeries {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  eventType   EventType @default(IN_PRACTICE) @map("event_type")
+
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  events Event[]
+
+  @@index([organizationId])
+  @@map("event_series")
+}
+
+// ─── EVENT TEMPLATE ──────────────────────────────────────────
+
+model EventTemplate {
+  id          String    @id @default(cuid())
+  name        String
+  eventType   EventType @default(IN_PRACTICE) @map("event_type")
+  defaultName String?   @map("default_name")
+
+  // Guest-facing content
+  descriptionTemplate String? @map("description_template") @db.Text
+  invitationHeadline  String? @map("invitation_headline")
+  invitationBody      String? @map("invitation_body") @db.Text
+
+  // Capacity
+  publicCapacity  Int?     @map("public_capacity")
+  privateCapacity Int?     @map("private_capacity")
+  waitlistEnabled Boolean  @default(true) @map("waitlist_enabled")
+
+  // Host
+  hostName     String? @map("host_name")
+  hostPhotoUrl String? @map("host_photo_url")
+  hostBio      String? @map("host_bio") @db.Text
+
+  // Reminder schedule (Phase 2)
+  reminderSchedule Json? @map("reminder_schedule")
+
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  events Event[]
+
+  @@index([organizationId])
+  @@map("event_templates")
+}
+
+// ─── EVENT ───────────────────────────────────────────────────
+
+model Event {
+  id        String      @id @default(cuid())
+  name      String
+  eventType EventType   @default(IN_PRACTICE) @map("event_type")
+  status    EventStatus @default(DRAFT)
+
+  // Date & Time (stored UTC)
+  date      DateTime
+  startTime DateTime  @map("start_time")
+  endTime   DateTime? @map("end_time")
+
+  // Venue
+  venueName    String  @map("venue_name")
+  venueAddress String  @map("venue_address")
+  venueCity    String? @map("venue_city")
+  venueState   String? @map("venue_state")
+  venueZip     String? @map("venue_zip")
+  venueImageUrl String? @map("venue_image_url")
+  venueMapUrl   String? @map("venue_map_url")
+
+  // Capacity
+  publicCapacity  Int     @map("public_capacity")
+  privateCapacity Int     @map("private_capacity")
+  waitlistEnabled Boolean @default(true) @map("waitlist_enabled")
+  autoCloseAtPrivateCap Boolean @default(true) @map("auto_close_at_private_cap")
+
+  // Guest-facing content
+  description        String? @db.Text
+  invitationHeadline String? @map("invitation_headline")
+  invitationBody     String? @map("invitation_body") @db.Text
+  confirmationMessage String? @map("confirmation_message") @db.Text
+
+  // Host
+  hostName     String? @map("host_name")
+  hostPhotoUrl String? @map("host_photo_url")
+  hostBio      String? @map("host_bio") @db.Text
+
+  // Deadline
+  rsvpDeadline DateTime? @map("rsvp_deadline")
+
+  // Internal
+  internalNotes String? @map("internal_notes") @db.Text
+
+  // Salesforce (Phase 3)
+  salesforceCampaignId String? @map("salesforce_campaign_id")
+
+  // Relations
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  seriesId String?      @map("series_id")
+  series   EventSeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+
+  templateId String?        @map("template_id")
+  template   EventTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Reverse relations
+  invitations Invitation[]
+  rsvps       RSVP[]
+
+  @@index([organizationId])
+  @@index([seriesId])
+  @@index([status])
+  @@index([date])
+  @@map("events")
+}
+
+enum EventType {
+  IN_PRACTICE
+  RESIDENT_FELLOW
+}
+
+enum EventStatus {
+  DRAFT
+  OPEN
+  FULL
+  WAITLIST_ONLY
+  CLOSED
+  COMPLETED
+}
+
+// ─── INVITEE (CONTACT RECORD) ────────────────────────────────
+
+model Invitee {
+  id String @id @default(cuid())
+
+  // Identity
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
+  email     String
+  phone     String?
+  title     String? // e.g., "Dr."
+
+  // Professional info
+  credentials  String? // e.g., "MD", "DO", "MD, FACC"
+  specialty    String?
+  practiceName String? @map("practice_name")
+  npiNumber    String? @unique @map("npi_number")
+
+  // Photo & bio
+  photoUrl   String? @map("photo_url")
+  bioSummary String? @map("bio_summary") @db.Text
+
+  // Classification
+  inviteeType InviteeType @default(IN_PRACTICE) @map("invitee_type")
+  source      String? // "csv_upload", "manual", "salesforce"
+  tags        String[] @default([])
+
+  // Additional fields
+  yearStartedPractice Int?    @map("year_started_practice")
+  unsubscribed        Boolean @default(false)
+
+  // Salesforce (Phase 3)
+  salesforceContactId String? @map("salesforce_contact_id")
+  salesforceLeadId    String? @map("salesforce_lead_id")
+
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  invitations          Invitation[] @relation("InviteeInvitations")
+  referredInvitations  Invitation[] @relation("ReferredInvitations")
+  rsvps                RSVP[]
+
+  @@unique([email, organizationId])
+  @@index([organizationId])
+  @@index([lastName, firstName])
+  @@map("invitees")
+}
+
+enum InviteeType {
+  IN_PRACTICE
+  RESIDENT_FELLOW
+}
+
+// ─── INVITATION ──────────────────────────────────────────────
+
+model Invitation {
+  id    String           @id @default(cuid())
+  token String           @unique @default(uuid())
+  status InvitationStatus @default(PENDING)
+
+  sentAt    DateTime? @map("sent_at")
+  openedAt  DateTime? @map("opened_at")
+  clickedAt DateTime? @map("clicked_at")
+
+  // Time on page tracking (seconds)
+  timeOnPage Int? @map("time_on_page")
+
+  // Referral tracking
+  referredByInviteeId String? @map("referred_by_invitee_id")
+  referredByInvitee   Invitee? @relation("ReferredInvitations", fields: [referredByInviteeId], references: [id], onDelete: SetNull)
+
+  eventId   String  @map("event_id")
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  inviteeId String  @map("invitee_id")
+  invitee   Invitee @relation("InviteeInvitations", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([eventId, inviteeId])
+  @@index([token])
+  @@index([eventId])
+  @@index([inviteeId])
+  @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  SENT
+  OPENED
+  RESPONDED
+  EXPIRED
+}
+
+// ─── RSVP ────────────────────────────────────────────────────
+
+model RSVP {
+  id     String     @id @default(cuid())
+  status RSVPStatus
+
+  // Post-RSVP management token
+  manageToken String? @unique @default(uuid()) @map("manage_token")
+
+  // Guest-provided info
+  bringingGuest       Boolean  @default(false) @map("bringing_guest")
+  guestName           String?  @map("guest_name")
+  guestFirstName      String?  @map("guest_first_name")
+  guestLastName       String?  @map("guest_last_name")
+  phoneNumber         String?  @map("phone_number")
+  dietaryRestrictions String?  @map("dietary_restrictions")
+
+  // Waitlist
+  waitlistPosition Int?              @map("waitlist_position")
+  waitlistPriority WaitlistPriority  @default(NORMAL) @map("waitlist_priority")
+
+  // Tracking
+  notes           String? @db.Text // Admin notes
+  movedFromEventId String? @map("moved_from_event_id")
+
+  // Timestamps
+  respondedAt  DateTime  @default(now()) @map("responded_at")
+  confirmedAt  DateTime? @map("confirmed_at")
+  cancelledAt  DateTime? @map("cancelled_at")
+  checkedInAt  DateTime? @map("checked_in_at")
+  checkedInBy  String?   @map("checked_in_by")
+  checkInOverride Boolean @default(false) @map("check_in_override")
+
+  // Salesforce (Phase 3)
+  salesforceCampaignMemberId String? @map("salesforce_campaign_member_id")
+
+  // Relations
+  eventId   String  @map("event_id")
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  inviteeId String  @map("invitee_id")
+  invitee   Invitee @relation(fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([eventId, inviteeId])
+  @@index([eventId, status])
+  @@index([inviteeId])
+  @@map("rsvps")
+}
+
+enum RSVPStatus {
+  PENDING
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+  DECLINED
+  NO_SHOW
+  CHECKED_IN
+}
+
+enum WaitlistPriority {
+  NORMAL
+  HIGH
+  VIP
+}
+
+// ─── COMMUNICATION (Phase 2) ─────────────────────────────────
+
+model Communication {
+  id        String              @id @default(cuid())
+  type      CommunicationType
+  direction CommunicationDirection @default(OUTBOUND)
+
+  eventId        String  @map("event_id")
+  recipientRsvpId String? @map("recipient_rsvp_id")
+
+  subject      String?
+  body         String  @db.Text
+  status       CommunicationStatus @default(QUEUED)
+  templateName String? @map("template_name")
+
+  sentAt DateTime? @map("sent_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([eventId])
+  @@map("communications")
+}
+
+enum CommunicationType {
+  EMAIL
+  SMS
+}
+
+enum CommunicationDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum CommunicationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+}
+
+// ─── ATTENDANCE HISTORY (Phase 4) ────────────────────────────
+
+model AttendanceHistory {
+  id String @id @default(cuid())
+
+  inviteeId String  @map("invitee_id")
+  eventId   String  @map("event_id")
+  rsvpId    String  @map("rsvp_id")
+
+  attended     Boolean
+  broughtGuest Boolean @default(false) @map("brought_guest")
+  notes        String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([inviteeId])
+  @@map("attendance_history")
+}
+
+// ─── SALESFORCE SYNC (Phase 3) ───────────────────────────────
+
+model SalesforceSync {
+  id String @id @default(cuid())
+
+  organizationId String @map("organization_id")
+
+  entityType String @map("entity_type") // EVENT, RSVP, INVITEE
+  entityId   String @map("entity_id")
+
+  salesforceObjectType String @map("salesforce_object_type")
+  salesforceId         String @map("salesforce_id")
+
+  syncDirection String @map("sync_direction") // TO_SF, FROM_SF
+  syncStatus    String @map("sync_status")    // PENDING, SUCCESS, FAILED
+  errorMessage  String? @map("error_message") @db.Text
+
+  syncedAt DateTime? @map("synced_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId])
+  @@index([entityType, entityId])
+  @@map("salesforce_syncs")
+}
