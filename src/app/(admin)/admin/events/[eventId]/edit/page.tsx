@@ -21,20 +21,13 @@ export default async function EditEventPage({ params }: { params: Promise<{ even
 
   if (!event) notFound();
 
-  const serializedEvent = {
-    ...event,
-    date: event.date.toISOString().split("T")[0],
-    createdAt: event.createdAt.toISOString(),
-    updatedAt: event.updatedAt.toISOString(),
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader title="Edit Event" description={event.name} />
       <Card>
         <CardContent className="p-6">
           <EventForm
-            event={serializedEvent}
+            event={event}
             series={series.map((s) => ({ id: s.id, name: s.name }))}
             templates={templates.map((t) => ({ id: t.id, name: t.name }))}
             mode="edit"

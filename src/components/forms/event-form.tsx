@@ -7,12 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import type { Event, EventSeries, EventTemplate } from "@prisma/client";
+import type { Event } from "@prisma/client";
+
+// Serialized version of Event where Date fields become strings (from server-to-client boundary)
+type SerializedEvent = {
+  [K in keyof Event]: Event[K] extends Date ? string | Date : Event[K] extends Date | null ? string | Date | null : Event[K];
+};
 
 interface EventFormProps {
-  event?: Event;
-  series?: EventSeries[];
-  templates?: EventTemplate[];
+  event?: SerializedEvent;
+  series?: { id: string; name: string }[];
+  templates?: { id: string; name: string }[];
   mode: "create" | "edit";
 }
 
@@ -85,13 +90,13 @@ const EVENT_STATUS_OPTIONS = [
   { value: "COMPLETED", label: "Completed" },
 ];
 
-function formatDateForInput(date: Date | null | undefined): string {
+function formatDateForInput(date: Date | string | null | undefined): string {
   if (!date) return "";
   const d = new Date(date);
   return d.toISOString().split("T")[0];
 }
 
-function formatTimeForInput(date: Date | null | undefined): string {
+function formatTimeForInput(date: Date | string | null | undefined): string {
   if (!date) return "";
   const d = new Date(date);
   const hours = d.getHours().toString().padStart(2, "0");
@@ -99,7 +104,7 @@ function formatTimeForInput(date: Date | null | undefined): string {
   return `${hours}:${minutes}`;
 }
 
-function formatDateTimeLocalForInput(date: Date | null | undefined): string {
+function formatDateTimeLocalForInput(date: Date | string | null | undefined): string {
   if (!date) return "";
   const d = new Date(date);
   return d.toISOString().slice(0, 16);
@@ -145,23 +150,9 @@ export function EventForm({ event, series, templates, mode }: EventFormProps) {
   useEffect(() => {
     if (mode !== "create" || !selectedTemplateId || !templates) return;
 
-    const template = templates.find((t) => t.id === selectedTemplateId);
-    if (!template) return;
-
+    // Templates only have id and name from the prop
     setFormValues((prev) => ({
       ...prev,
-      name: template.defaultName ?? prev.name,
-      eventType: template.eventType ?? prev.eventType,
-      description: template.descriptionTemplate ?? prev.description,
-      invitationHeadline: template.invitationHeadline ?? prev.invitationHeadline,
-      invitationBody: template.invitationBody ?? prev.invitationBody,
-      publicCapacity: template.publicCapacity?.toString() ?? prev.publicCapacity,
-      privateCapacity:
-        template.privateCapacity?.toString() ?? prev.privateCapacity,
-      waitlistEnabled: template.waitlistEnabled ?? prev.waitlistEnabled,
-      hostName: template.hostName ?? prev.hostName,
-      hostPhotoUrl: template.hostPhotoUrl ?? prev.hostPhotoUrl,
-      hostBio: template.hostBio ?? prev.hostBio,
       templateId: selectedTemplateId,
     }));
   }, [selectedTemplateId, templates, mode]);
