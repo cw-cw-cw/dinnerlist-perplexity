@@ -20,7 +20,7 @@ interface Props {
     id: string;
     status: string;
     createdAt: string;
-    invitation: { eventId: string };
+    eventId: string;
   }[];
 }
 
@@ -68,7 +68,7 @@ export function AnalyticsDashboard({ events, invitations, rsvps }: Props) {
           <CardContent>
             <div className="space-y-3">
               {events.slice(0, 10).map((event) => {
-                const eventRsvps = rsvps.filter((r) => r.invitation.eventId === event.id);
+                const eventRsvps = rsvps.filter((r) => r.eventId === event.id);
                 const eventInvitations = invitations.filter((i) => i.eventId === event.id);
                 const acceptedCount = eventRsvps.filter((r) => r.status === "CONFIRMED").length;
                 return (
