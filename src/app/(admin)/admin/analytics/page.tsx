@@ -19,8 +19,8 @@ export default async function AnalyticsPage() {
       select: { id: true, status: true, openedAt: true, clickedAt: true, timeOnPage: true, eventId: true, referredByInviteeId: true },
     }),
     prisma.rSVP.findMany({
-      where: { invitation: { event: { organizationId: orgId } } },
-      select: { id: true, status: true, createdAt: true, invitation: { select: { eventId: true } } },
+      where: { event: { organizationId: orgId } },
+      select: { id: true, status: true, createdAt: true, eventId: true },
     }),
   ]);
 
